@@ -8,17 +8,22 @@ const protect = require('../Backend/Middleware/authMiddleware');
 
 
 const app = express();
+// Conexión de la base de datos
 connectDB();
 
+// Permitir conexion Frontend y Backend
 const corsOptions = {
     origin: '*'
 };
 
 app.use(cors(corsOptions));
 
+
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
   
+
 app.use('/api/users', require('./Routes/userRoutes'));
 
+// Verificar que el servidor este escuchando
 app.listen(port, () => console.log(`Server started on port ${port}`));

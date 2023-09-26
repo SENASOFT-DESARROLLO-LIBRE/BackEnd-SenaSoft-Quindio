@@ -5,8 +5,8 @@ const mail = {
     pass: '1091884556'
 }
 
+// Metodo para enviar en correo
 const transporter = nodemailer.createTransport({
-    // Debes especificar el servicio de correo que estás utilizando como 'Gmail'
     service: 'Gmail',
     auth: {
         user: mail.user,
@@ -14,6 +14,7 @@ const transporter = nodemailer.createTransport({
     },
 });
 
+// Envio del correo
   const sendEmail = async (email, subject, html) => {
     try {
         
@@ -30,6 +31,7 @@ const transporter = nodemailer.createTransport({
     }
   }
 
+  // Metodo para obtener el template
   const getTemplate = (name, token) => {
       return `
         <head>
