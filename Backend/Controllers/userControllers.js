@@ -1,64 +1,111 @@
-const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const asyncHandler = require('express-async-handler');
 const User = require('../Model/userModel');
 const { v4: uuidv4 } = require('uuid');
-const sendEmail = require('../Config/email');
+const { sendEmail, getTemplate } = require('../Config/email');
+const { getToken, getTokenData } = require('../Config/jwtConfig');
 // const nodemailer = require('nodemailer')
 // const crypto = require('crypto');
 // const moment = require('moment');
 
-const registerUser = asyncHandler(async(req, res) => {
-    const { name, email, cellphone, password } = req.body
+const registerUser = asyncHandler(async (req, res) => {
+    // Obtener la data del usuario
+    const { name, email, cellphone, password } = req.body;
 
     if (!name || !email || !cellphone || !password) {
-        res.status(400)
-        throw new Error('Please add all fields')
+        res.status(400);
+        throw new Error('Please add all fields');
     }
 
-    // Check if user exists
-    let userExists = await User.findOne({ email })
+    // Validar si el usuario existe
+    let userExists = await User.findOne({ email });
 
     if (userExists) {
-        res.status(400)
-        throw new Error('User already exists')
+        res.status(400);
+        throw new Error('User already exists');
     }
 
+    // Generar el codigo
     const code = uuidv4();
+    console.log(code);
+
+    // Crear un nuevo usuario
+    const user = new User({ name, email, cellphone, code });
+
+    // Generar Token
+    const token = getToken({email, code});
+
+    // Obtener un template
+    const template = getTemplate(name, token);
     
-
-    userExists = new User({ name, email, cellphone, code})
-
-    await sendEmail(email, 'ACTIVACION DE CUENTA!', `Hola, tu cuenta ha sido activada para poder utilizarla en el aplicativo \n`); 
-
+    await sendEmail(email,'Este es el Email de prueba', template);
+    
     // Hash Password
-    const salt = await bcrypt.genSalt(10)
-    const hashedPassword = await bcrypt.hash(password, salt)
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Create User
-    const user = await User.create({
-        name,
-        email,
-        cellphone,
-        password: hashedPassword,
-    })
+    // Set the hashed password
+    user.password = hashedPassword;
 
-    if (user) {
-        res.status(201).json({
-            _id: user.id,
-            name: user.name,
-            email: user.email,
-            cellphone: user.cellphone,
-            token: generateToken(user._id)
-        })
-    } else {
-        res.status(400)
-        throw new Error('Invalid user data')
-    }
+    // Respond with a success message
+    res.status(201).json({
+        _id: user.id,
+        name: user.name,
+        email: user.email,
+        cellphone: user.cellphone,
+        token: getToken(user._id),
+    });
 
-    const savedUser = await user.save()
-
+    const savedUser = await user.save();
     // console.log(savedUser);
+});
+
+const confirm = asyncHandler(async (req, res) => {
+    try {
+       // Obtener el token
+       const { token } = req.params;
+       
+       // Verificar la data
+       const data = await getTokenData(token);
+
+       if(data === null) {
+            return res.json({
+                success: false,
+                msg: 'Error al obtener data'
+            });
+       }
+
+       console.log(data);
+
+       const { email } = data.data;
+
+       // Verificar existencia del usuario
+       const user = await User.findOne({ email }) || null;
+
+       if(user === null) {
+            return res.json({
+                success: false,
+                msg: 'Usuario no existe'
+            });
+       }
+
+       // Actualizar usuario
+       user.status = 'VERIFIED';
+       await user.save();
+
+       // Redireccionar a la confirmación
+        res.json({
+            success: true,
+            msg: 'Usuario confirmado'
+        });
+        
+    } catch (error) {
+        console.log(error);
+        return res.json({
+            success: false,
+            msg: 'Error al confirmar usuario'
+        });
+    }
 });
 
 const login = asyncHandler(async(req, res) => {
@@ -84,14 +131,8 @@ const login = asyncHandler(async(req, res) => {
     console.log(user);
 });
 
-// Generate JWT
-const generateToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET, {
-        expiresIn: '90d', 
-    })
-}
-
 module.exports = {
     registerUser,
     login,
+    confirm
 }
