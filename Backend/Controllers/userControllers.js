@@ -37,8 +37,9 @@ const registerUser = asyncHandler(async (req, res) => {
 
     // Obtener un template
     const template = getTemplate(name, token);
-    
-    await sendEmail(email,'Este es el Email de prueba', template);
+
+    // Envia el Email
+    await sendEmail(email,'ACTIVACIÓN DE CUENTA!', template);
     
     // Hash Password
     const salt = await bcrypt.genSalt(10);
@@ -114,19 +115,25 @@ const login = asyncHandler(async(req, res) => {
     // Check for user email
     const user = await User.findOne({email});
 
-    if (user && (await bcrypt.compare(password, user.password))) {
+    if (user.status === 'VERIFIED') {
+        if (user && (await bcrypt.compare(password, user.password))) {
+            res.json({
+                _id: user.id,
+                name: user.name,
+                email: user.email,
+                phone: user.cellphone,
+                token: getToken(user._id),
+                msg: "LOGUEADO"
+            })
+    }
+    } else {
         res.json({
             _id: user.id,
             name: user.name,
             email: user.email,
-            phone: user.cellphone,
-            token: generateToken(user._id),
-            msg: "User Registrado"
+            // token: getToken(user._id),
+            msg: "DENEGADO, ACTIVE SU CUENTA"
         })
-}
-     else {
-        res.status(400)
-        throw new Error('Invalid credentials')
     }
     console.log(user);
 });
