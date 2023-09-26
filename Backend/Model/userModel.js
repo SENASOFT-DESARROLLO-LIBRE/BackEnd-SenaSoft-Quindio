@@ -19,6 +19,11 @@ const userSchema = mongoose.Schema({
         type: String,
         required: [true, 'Please add a password']
     },
+    status: {
+        type: String,
+        required: true,
+        default: "UNVERIFIED"
+    },
 },
 {
     timestamps: true,

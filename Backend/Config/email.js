@@ -6,29 +6,26 @@ const mail = {
 }
 
 const transporter = nodemailer.createTransport({
-    host: "morenoriosjhonalexander@gmail.com",
-    port: 5000,
-    tls: {
-        rejectUnauthorized: false,
-    },
-    secure: false,
+    // Debes especificar el servicio de correo que estás utilizando como 'Gmail'
+    service: 'Gmail',
     auth: {
-      user: mail.user,
-      pass: mail.pass,
+        user: mail.user,
+        pass: 'jrfr rdch rose iwac',
     },
-  });
+});
 
-const sendEmail = async (email, subject, html) => {
+const sendEmail = async (email, subject, text) => {
     try {
-            await transporter.sendMail({
-            from: `Fred Foo 👻 ${mail.user}`, // sender address
-            to: email, // list of receivers
-            subject,
-            text: "Hola zozozorras", // plain text body
-            html,
-    })} catch (error) {
+        await transporter.sendMail({
+            from: mail.user, // sender address
+                to: email,
+                subject, // Subject line
+                text,
+        });
+        console.log("Correo enviado correctamente");
+    } catch (error) {
         console.log(error);
     }
 };
 
-module.exports = sendEmail
+module.exports = sendEmail;

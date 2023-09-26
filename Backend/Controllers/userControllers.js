@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const asyncHandler = require('express-async-handler');
 const User = require('../Model/userModel');
-const uuidv4 = require('uuidv4');
+const { v4: uuidv4 } = require('uuid');
 const sendEmail = require('../Config/email');
 // const nodemailer = require('nodemailer')
 // const crypto = require('crypto');
@@ -25,10 +25,11 @@ const registerUser = asyncHandler(async(req, res) => {
     }
 
     const code = uuidv4();
+    
 
     userExists = new User({ name, email, cellphone, code})
 
-    await sendEmail(email, 'Este es un correo de prueba', 'Holaaaaaaaaaaaaaaaaaaaaa'); 
+    await sendEmail(email, 'ACTIVACION DE CUENTA!', `Hola, tu cuenta ha sido activada para poder utilizarla en el aplicativo \n`); 
 
     // Hash Password
     const salt = await bcrypt.genSalt(10)
