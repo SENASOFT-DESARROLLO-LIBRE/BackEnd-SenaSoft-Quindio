@@ -1,5 +1,6 @@
 const nodemailer = require('nodemailer');
 
+// Datos 
 const mail = {
     user: 'morenoriosjhonalexander@gmail.com',
     pass: '1091884556'

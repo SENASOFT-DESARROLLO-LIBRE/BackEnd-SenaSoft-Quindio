@@ -100,10 +100,7 @@ const confirm = asyncHandler(async (req, res) => {
        await user.save();
 
        // Redireccionar a la confirmación
-        res.json({
-            success: true,
-            msg: 'Usuario confirmado'
-        });
+       return res.redirect('http://localhost:3000/ConfirmAccount');
         
     } catch (error) {
         console.log(error);
@@ -130,8 +127,12 @@ const login = asyncHandler(async(req, res) => {
                 token: getToken(user._id),
                 msg: "LOGUEADO"
             })
-    }
     } else {
+        res.json({
+            msg: "NO LOGUEADO"
+        })
+    }
+} else {
         res.json({
             // _id: user.id,
             // name: user.name,
@@ -198,12 +199,12 @@ const recoverPassword = asyncHandler(async(req, res) => {
 
 const saveLocations = asyncHandler(async(req, res) => {
     try {
-        const { locations , connections , start} = req.body
+        const { ubicaciones , conexiones , inicio} = req.body
         // Crear un nuevo objeto con los datos proporcionados
         const newObject = new MainModel({
-            locations,
-            connections,
-            start,
+            ubicaciones,
+            conexiones,
+            inicio,
           })
     
         // Guardar el objeto en la base de datos

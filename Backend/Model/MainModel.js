@@ -16,9 +16,9 @@ const connectionSchema = new mongoose.Schema({
 
 // Definir el esquema para el objeto principal
 const mainSchema = new mongoose.Schema({
-  locations: [locationSchema],
-  connections: [connectionSchema],
-  start: String,
+  ubicaciones: [locationSchema],
+  conexiones: [connectionSchema],
+  inicio: String,
 });
 
 // Crear el modelo para el objeto principal
