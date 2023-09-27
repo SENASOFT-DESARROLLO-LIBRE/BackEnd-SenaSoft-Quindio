@@ -1,15 +1,23 @@
 const bcrypt = require('bcryptjs');
 const asyncHandler = require('express-async-handler');
 const User = require('../Model/userModel');
+const Location = require('../Model/locationModel');
 const { v4: uuidv4 } = require('uuid');
 const { sendEmail, getTemplate } = require('../Config/email');
 const { getToken, getTokenData } = require('../Config/jwtConfig');
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
+
+const generateRandom = () => {
+    const password = crypto.randomBytes(4).toString('hex');
+    return password;
+};
 
 const registerUser = asyncHandler(async (req, res) => {
     // Obtener la data del usuario
-    const { name, email, cellphone, password } = req.body;
+    const { name, email, password } = req.body;
 
-    if (!name || !email || !cellphone || !password) {
+    if (!name || !email || !password) {
         res.status(400);
         throw new Error('Please add all fields');
     }
@@ -27,7 +35,7 @@ const registerUser = asyncHandler(async (req, res) => {
     console.log(code);
 
     // Crear un nuevo usuario
-    const user = new User({ name, email, cellphone, code });
+    const user = new User({ name, email, code });
 
     // Generar Token
     const token = getToken({email, code});
@@ -50,7 +58,6 @@ const registerUser = asyncHandler(async (req, res) => {
         _id: user.id,
         name: user.name,
         email: user.email,
-        cellphone: user.cellphone,
         token: getToken(user._id),
     });
 
@@ -120,25 +127,83 @@ const login = asyncHandler(async(req, res) => {
                 _id: user.id,
                 name: user.name,
                 email: user.email,
-                phone: user.cellphone,
                 token: getToken(user._id),
                 msg: "LOGUEADO"
             })
     }
     } else {
         res.json({
-            _id: user.id,
-            name: user.name,
-            email: user.email,
+            // _id: user.id,
+            // name: user.name,
+            // email: user.email,
             // token: getToken(user._id),
-            msg: "DENEGADO, ACTIVE SU CUENTA"
+            msg: `DENEGADO, SEÑOR ${user.name.toUpperCase()} ACTIVE SU CUENTA DESDE SU CORREO ELECTRONICO`
         })
     }
     console.log(user);
 });
 
+const recoverPassword = asyncHandler(async(req, res) => {
+    const { email } = req.body
+
+    const mail = {
+        user: 'morenoriosjhonalexander@gmail.com',
+        pass: '1091884556'
+    }
+
+    if(!email) res.status(400).send({msg: "Debe ingresar el email"});
+
+    const user = await User.findOne({email});
+
+        let newPassword = generateRandom();
+            if(user){
+                let config = {
+                    host: "smtp.gmail.com",
+                    port: 587,
+                    auth: {
+                        user: mail.user, // generated ethereal user
+                        pass: "jrfr rdch rose iwac", // generated ethereal password
+                    },
+                }
+                let mensaje = {
+                from: mail.user, // sender address
+                to: user.email,
+                // list of receivers
+                subject: "Recuperacion de contraseña", // Subject line
+                text: `¿Hola, has olvidado tu contraseña? \n Para ingresar a tu cuenta de nuevo deberas usar esta contraseña: 
+                Tu nueva contraseña es: ${newPassword} \n\n Cuado ingreses no olvides cambiar tu contraseña`
+            }
+            
+            const transport = nodemailer.createTransport(config)
+            const info = transport.sendMail(mensaje)
+            //   console.log(info)
+            
+            if(newPassword){
+                const salt = bcrypt.genSaltSync(10)
+                const hashPassword = bcrypt.hashSync(newPassword, salt)
+                newPassword = hashPassword
+            }
+            // console.log(newPassword);
+
+                User.updateOne({email}, { $set: { password: newPassword } }).then(()=>{
+                    res.json({
+                        msg: "Se cambio la contraseña User"
+                    })
+                })
+        } else {
+            res.status(400)
+            throw new Error('Invalid email')
+        }
+});
+
+const saveLocations = asyncHandler(async(req, res) => {
+    
+});
+
 module.exports = {
     registerUser,
     login,
-    confirm
+    confirm,
+    recoverPassword,
+    saveLocations
 }
