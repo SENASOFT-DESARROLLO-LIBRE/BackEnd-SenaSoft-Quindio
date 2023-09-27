@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 const asyncHandler = require('express-async-handler');
 const User = require('../Model/userModel');
-const Location = require('../Model/locationModel');
+const MainModel = require('../Model/MainModel');
 const { v4: uuidv4 } = require('uuid');
 const { sendEmail, getTemplate } = require('../Config/email');
 const { getToken, getTokenData } = require('../Config/jwtConfig');
@@ -197,7 +197,24 @@ const recoverPassword = asyncHandler(async(req, res) => {
 });
 
 const saveLocations = asyncHandler(async(req, res) => {
+    try {
+        const { locations , connections , start} = req.body
+        // Crear un nuevo objeto con los datos proporcionados
+        const newObject = new MainModel({
+            locations,
+            connections,
+            start,
+          })
     
+        // Guardar el objeto en la base de datos
+        await newObject.save();
+    
+        console.log('Objeto guardado exitosamente');
+        res.status(200).json({ message: 'Objeto guardado exitosamente' });
+      } catch (error) {
+        console.error('Error al guardar el objeto:', error);
+        res.status(500).json({ error: 'Error al guardar el objeto' });
+      }
 });
 
 module.exports = {
