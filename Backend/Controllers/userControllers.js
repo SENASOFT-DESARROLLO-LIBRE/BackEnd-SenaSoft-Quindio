@@ -74,7 +74,7 @@ const confirm = asyncHandler(async (req, res) => {
        // Verificar la data
        const data = await getTokenData(token);
 
-       if(data === null) {
+       if(!data) {
             return res.json({
                 success: false,
                 msg: 'Error al obtener data'
@@ -83,12 +83,12 @@ const confirm = asyncHandler(async (req, res) => {
 
        console.log(data);
 
-       const { email } = data.data;
+       const { emailCreate } = data.data;
 
        // Verificar existencia del usuario
-       const user = await User.findOne({ email }) || null;
+       let user = await User.findOne({ emailCreate });
 
-       if(user === null) {
+       if(!user) {
             return res.json({
                 success: false,
                 msg: 'Usuario no existe'
