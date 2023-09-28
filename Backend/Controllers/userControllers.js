@@ -63,7 +63,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     // Guardar el usuario en la base de datos
     const savedUser = await user.save();
-    console.log(savedUser);
+    // console.log(savedUser);
 });
 
 const confirm = asyncHandler(async (req, res) => {
@@ -96,7 +96,7 @@ const confirm = asyncHandler(async (req, res) => {
        }
 
        // Actualizar usuario
-       user.status = 'VERIFIED';
+       user.status = true;
        await user.save();
 
        // Redireccionar a la confirmación
@@ -117,8 +117,13 @@ const login = asyncHandler(async(req, res) => {
     // Validar email
     const user = await User.findOne({emailCreate});
 
+    if (!user) {
+        res.status(400).json({ msg: 'Usuario no encontrado' });
+        return;
+    }
+
     // Validar la verificación de login
-    
+    if (user.status === true) {
         if (user && (await bcrypt.compare(passwordCreate, user.passwordCreate))) {
             res.json({
                 _id: user.id,
@@ -131,6 +136,11 @@ const login = asyncHandler(async(req, res) => {
             res.status(400)
             throw new Error('Invalid credentials')
         }
+    } else {
+        res.json({
+            msg: `DENEGADO, SEÑOR@ ${user.name}, VERIFIQUE SU CORREO PARA ACTIVAR SU CUENTA`
+        })
+    }
 }
 );
 
@@ -213,5 +223,5 @@ module.exports = {
     login,
     confirm,
     recoverPassword,
-    saveLocations
+    saveLocations,
 }
