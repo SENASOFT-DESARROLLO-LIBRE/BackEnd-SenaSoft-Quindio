@@ -15,15 +15,15 @@ const generateRandom = () => {
 
 const registerUser = asyncHandler(async (req, res) => {
     // Obtener la data del usuario
-    const { name, email, password } = req.body;
+    const { name, emailCreate, passwordCreate } = req.body;
 
-    if (!name || !email || !password) {
+    if (!name || !emailCreate || !passwordCreate) {
         res.status(400);
         throw new Error('Please add all fields');
     }
 
     // Validar si el usuario existe
-    let userExists = await User.findOne({ email });
+    let userExists = await User.findOne({ emailCreate });
 
     if (userExists) {
         res.status(400);
@@ -35,35 +35,35 @@ const registerUser = asyncHandler(async (req, res) => {
     console.log(code);
 
     // Crear un nuevo usuario
-    const user = new User({ name, email, code });
+    const user = new User({ name, emailCreate, code });
 
     // Generar Token
-    const token = getToken({email, code});
+    const token = getToken({emailCreate, code});
 
     // Obtener un template
     const template = getTemplate(name, token);
 
     // Envia el Email
-    await sendEmail(email,'ACTIVACIÓN DE CUENTA!', template);
+    await sendEmail(emailCreate,'ACTIVACIÓN DE CUENTA!', template);
     
     // Hash Password
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(passwordCreate, salt);
 
     // Encripta la contraseña
-    user.password = hashedPassword;
+    user.passwordCreate = hashedPassword;
 
     // Responde con un mensaje 
     res.status(201).json({
         _id: user.id,
         name: user.name,
-        email: user.email,
+        email: user.emailCreate,
         token: getToken(user._id),
     });
 
     // Guardar el usuario en la base de datos
     const savedUser = await user.save();
-    // console.log(savedUser);
+    console.log(savedUser);
 });
 
 const confirm = asyncHandler(async (req, res) => {
@@ -112,37 +112,27 @@ const confirm = asyncHandler(async (req, res) => {
 });
 
 const login = asyncHandler(async(req, res) => {
-    const { email, password } = req.body
+    const { emailCreate, passwordCreate } = req.body
 
     // Validar email
-    const user = await User.findOne({email});
+    const user = await User.findOne({emailCreate});
 
     // Validar la verificación de login
-    if (user.status === 'VERIFIED') {
-        if (user && (await bcrypt.compare(password, user.password))) {
+    
+        if (user && (await bcrypt.compare(passwordCreate, user.passwordCreate))) {
             res.json({
                 _id: user.id,
                 name: user.name,
-                email: user.email,
+                email: user.emailCreate,
                 token: getToken(user._id),
                 msg: "LOGUEADO"
             })
-    } else {
-        res.json({
-            msg: "NO LOGUEADO"
-        })
-    }
-} else {
-        res.json({
-            // _id: user.id,
-            // name: user.name,
-            // email: user.email,
-            // token: getToken(user._id),
-            msg: `DENEGADO, SEÑOR ${user.name.toUpperCase()} ACTIVE SU CUENTA DESDE SU CORREO ELECTRONICO`
-        })
-    }
-    console.log(user);
-});
+        } else {
+            res.status(400)
+            throw new Error('Invalid credentials')
+        }
+}
+);
 
 const recoverPassword = asyncHandler(async(req, res) => {
     const { email } = req.body
